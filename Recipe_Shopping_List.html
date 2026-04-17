@@ -1,0 +1,1874 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Recipes">
+<meta name="theme-color" content="#2c5f4e">
+<title>Recipes & Shopping List</title>
+<style>
+  :root {
+    --green: #2c5f4e;
+    --green-light: #e8f1ed;
+    --green-accent: #4a8b73;
+    --cream: #faf7f2;
+    --card: #ffffff;
+    --text: #1f2d27;
+    --text-muted: #6a7a72;
+    --border: #e1e6e3;
+    --danger: #c0443a;
+    --warning: #d89b2a;
+    --shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+    background: var(--cream);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    padding-bottom: 90px;
+    padding-top: env(safe-area-inset-top);
+    min-height: 100vh;
+  }
+  header {
+    background: var(--green);
+    color: white;
+    padding: calc(16px + env(safe-area-inset-top)) 20px 16px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+  header h1 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.3px;
+  }
+  header .subtitle {
+    font-size: 13px;
+    opacity: 0.8;
+    margin-top: 2px;
+  }
+  nav.tabs {
+    display: flex;
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: calc(62px + env(safe-area-inset-top));
+    z-index: 9;
+  }
+  nav.tabs button {
+    flex: 1;
+    padding: 14px 8px;
+    background: none;
+    border: none;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+  nav.tabs button.active {
+    color: var(--green);
+    border-bottom-color: var(--green);
+  }
+  nav.tabs button .badge {
+    display: inline-block;
+    background: var(--green);
+    color: white;
+    font-size: 11px;
+    padding: 1px 7px;
+    border-radius: 10px;
+    margin-left: 4px;
+    font-weight: 600;
+    min-width: 18px;
+  }
+  nav.tabs button:not(.active) .badge {
+    background: var(--text-muted);
+  }
+  main { padding: 16px; max-width: 700px; margin: 0 auto; }
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* Search & filter */
+  .controls {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .search-input {
+    flex: 1;
+    padding: 11px 14px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-size: 16px;
+    background: var(--card);
+    font-family: inherit;
+    -webkit-appearance: none;
+  }
+  .search-input:focus {
+    outline: none;
+    border-color: var(--green-accent);
+  }
+  .filter-chips {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 6px;
+    margin-bottom: 10px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .filter-chips::-webkit-scrollbar { display: none; }
+  .chip {
+    padding: 6px 12px;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    background: var(--card);
+    font-size: 13px;
+    color: var(--text-muted);
+    white-space: nowrap;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .chip.active {
+    background: var(--green);
+    color: white;
+    border-color: var(--green);
+  }
+
+  /* Recipe cards */
+  .recipe-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    box-shadow: var(--shadow);
+    transition: all 0.15s;
+  }
+  .recipe-card.checked {
+    background: var(--green-light);
+    border-color: var(--green-accent);
+  }
+  .recipe-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+  }
+  .check {
+    width: 26px;
+    height: 26px;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--card);
+    transition: all 0.15s;
+  }
+  .recipe-card.checked .check {
+    background: var(--green);
+    border-color: var(--green);
+  }
+  .recipe-card.checked .check::after {
+    content: "✓";
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+  }
+  .recipe-info {
+    flex: 1;
+    min-width: 0;
+  }
+  .recipe-name {
+    font-weight: 600;
+    font-size: 16px;
+    color: var(--text);
+    margin: 0;
+  }
+  .recipe-theme {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+  .recipe-actions {
+    display: flex;
+    gap: 4px;
+  }
+  .icon-btn {
+    background: none;
+    border: none;
+    padding: 6px;
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: 16px;
+    border-radius: 6px;
+    font-family: inherit;
+  }
+  .icon-btn:active { background: var(--green-light); }
+  .recipe-ingredients {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.5;
+    display: none;
+  }
+  .recipe-card.expanded .recipe-ingredients { display: block; }
+
+  /* Shopping list */
+  .shopping-empty {
+    text-align: center;
+    color: var(--text-muted);
+    padding: 40px 20px;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .shopping-empty .icon {
+    font-size: 48px;
+    display: block;
+    margin-bottom: 12px;
+    opacity: 0.3;
+  }
+  .shopping-group {
+    margin-bottom: 18px;
+  }
+  .shopping-group-title {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+    padding: 0 4px;
+  }
+  .shop-item {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .shop-item.got .item-name {
+    text-decoration: line-through;
+    color: var(--text-muted);
+  }
+  .shop-item.got { background: var(--green-light); opacity: 0.75; }
+  .shop-check {
+    width: 22px;
+    height: 22px;
+    border: 2px solid var(--border);
+    border-radius: 6px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: white;
+  }
+  .shop-item.got .shop-check {
+    background: var(--green-accent);
+    border-color: var(--green-accent);
+  }
+  .shop-item.got .shop-check::after {
+    content: "✓"; color: white; font-size: 14px; font-weight: bold;
+  }
+  .item-name { flex: 1; font-size: 15px; }
+  .item-count {
+    font-size: 11px;
+    color: var(--text-muted);
+    background: var(--green-light);
+    padding: 2px 7px;
+    border-radius: 10px;
+    flex-shrink: 0;
+  }
+
+  /* Pantry */
+  .pantry-add {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .pantry-add input {
+    flex: 1;
+    padding: 11px 14px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-size: 16px;
+    background: var(--card);
+    font-family: inherit;
+    -webkit-appearance: none;
+  }
+  .pantry-add button {
+    padding: 0 18px;
+    background: var(--green);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 15px;
+  }
+  .pantry-item {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .pantry-item.have { background: var(--green-light); border-color: var(--green-accent); }
+  .pantry-item .item-name { cursor: pointer; }
+  .pantry-item.have .item-name { color: var(--green); font-weight: 500; }
+
+  /* FAB & Modal */
+  .fab {
+    position: fixed;
+    bottom: calc(20px + env(safe-area-inset-bottom));
+    right: 20px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--green);
+    color: white;
+    border: none;
+    font-size: 28px;
+    box-shadow: 0 4px 14px rgba(44,95,78,0.4);
+    cursor: pointer;
+    z-index: 20;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .fab:active { transform: scale(0.95); }
+
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 100;
+    display: none;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .modal-backdrop.open { display: flex; }
+  .modal {
+    background: var(--cream);
+    width: 100%;
+    max-width: 600px;
+    max-height: 90vh;
+    border-radius: 20px 20px 0 0;
+    padding: 20px;
+    padding-bottom: calc(20px + env(safe-area-inset-bottom));
+    overflow-y: auto;
+  }
+  @media(min-width: 600px){
+    .modal-backdrop { align-items: center; }
+    .modal { border-radius: 20px; max-height: 85vh; }
+  }
+  .modal h2 {
+    margin: 0 0 16px 0;
+    font-size: 20px;
+    color: var(--green);
+  }
+  .form-group { margin-bottom: 14px; }
+  .form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+  }
+  .form-group input,
+  .form-group textarea,
+  .form-group select {
+    width: 100%;
+    padding: 11px 14px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-size: 16px;
+    background: var(--card);
+    font-family: inherit;
+    -webkit-appearance: none;
+  }
+  .form-group textarea { min-height: 110px; resize: vertical; }
+  .form-help { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+  .modal-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+  }
+  .btn {
+    flex: 1;
+    padding: 13px;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .btn-primary { background: var(--green); color: white; }
+  .btn-secondary { background: var(--card); color: var(--text); border: 1px solid var(--border); }
+  .btn-danger { background: var(--danger); color: white; }
+
+  /* Toolbar actions */
+  .toolbar {
+    display: flex;
+    gap: 8px;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .toolbar-info {
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+  .text-btn {
+    background: none;
+    border: none;
+    color: var(--green);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 6px 8px;
+    font-family: inherit;
+  }
+
+  /* Selected recipes summary */
+  .selected-summary {
+    background: var(--green-light);
+    border: 1px solid var(--green-accent);
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin-bottom: 14px;
+    font-size: 13px;
+    color: var(--green);
+    display: none;
+  }
+  .selected-summary.visible { display: block; }
+  .selected-summary strong { font-weight: 600; }
+
+  /* Share/copy box */
+  .share-box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+    margin-top: 14px;
+    font-family: "SF Mono", Monaco, monospace;
+    font-size: 12px;
+    white-space: pre-wrap;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-muted);
+  }
+
+  /* Sync status pill in header */
+  .sync-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    background: rgba(255,255,255,0.15);
+    padding: 3px 9px;
+    border-radius: 10px;
+    margin-top: 6px;
+    font-weight: 500;
+  }
+  .sync-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: #7fcf9f;
+    box-shadow: 0 0 0 0 rgba(127,207,159, 0.7);
+  }
+  .sync-status.syncing .sync-dot {
+    background: #f4d36a;
+    animation: pulse 1s infinite;
+  }
+  .sync-status.offline .sync-dot { background: #e88a7f; }
+  .sync-status.local .sync-dot { background: #aaa; }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(244,211,106, 0.7); }
+    70% { box-shadow: 0 0 0 6px rgba(244,211,106, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(244,211,106, 0); }
+  }
+
+  /* Setup / Welcome overlay */
+  .setup-overlay {
+    position: fixed;
+    inset: 0;
+    background: var(--cream);
+    z-index: 200;
+    overflow-y: auto;
+    padding: 24px 20px;
+    display: none;
+  }
+  .setup-overlay.open { display: block; }
+  .setup-inner { max-width: 520px; margin: 0 auto; }
+  .setup-overlay h1 {
+    color: var(--green);
+    font-size: 24px;
+    margin: 20px 0 6px;
+  }
+  .setup-overlay p {
+    color: var(--text-muted);
+    font-size: 14px;
+    line-height: 1.55;
+    margin: 0 0 14px;
+  }
+  .setup-step {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+  .setup-step-num {
+    display: inline-block;
+    background: var(--green);
+    color: white;
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 24px;
+    font-size: 13px;
+    font-weight: 600;
+    margin-right: 8px;
+  }
+  .setup-step h3 {
+    display: inline;
+    font-size: 15px;
+    color: var(--text);
+    font-weight: 600;
+  }
+  .setup-step .step-body {
+    margin-top: 10px;
+    font-size: 14px;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+  .setup-step a.btn-link {
+    display: inline-block;
+    background: var(--green);
+    color: white;
+    text-decoration: none;
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    margin-top: 8px;
+  }
+  .setup-tabs {
+    display: flex;
+    gap: 6px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 4px;
+    margin-bottom: 16px;
+  }
+  .setup-tabs button {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    background: none;
+    border-radius: 7px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .setup-tabs button.active {
+    background: var(--green);
+    color: white;
+  }
+  .setup-pane { display: none; }
+  .setup-pane.active { display: block; }
+  .setup-error {
+    color: var(--danger);
+    font-size: 13px;
+    margin-top: 8px;
+    min-height: 18px;
+  }
+
+  /* Settings / group modal */
+  .info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+  }
+  .info-row:last-child { border-bottom: none; }
+  .info-row .label { color: var(--text-muted); }
+  .info-row .value { font-weight: 500; text-align: right; word-break: break-all; margin-left: 10px; }
+  .code-block {
+    background: var(--green-light);
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-family: "SF Mono", Monaco, monospace;
+    font-size: 12px;
+    word-break: break-all;
+    margin: 8px 0;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+    <div>
+      <h1>🍽️ Recipes & Shopping</h1>
+      <div class="subtitle" id="subtitle-line">Check recipes → build your list → shop smart</div>
+      <div class="sync-status local" id="sync-status" style="display:none">
+        <span class="sync-dot"></span>
+        <span id="sync-text">Local only</span>
+      </div>
+    </div>
+    <button class="icon-btn" id="settings-btn" style="color:white;font-size:22px;padding:8px;margin-top:4px" aria-label="Settings">⚙</button>
+  </div>
+</header>
+
+<nav class="tabs">
+  <button data-tab="recipes" class="active">Recipes</button>
+  <button data-tab="shopping">Shopping <span class="badge" id="shop-badge">0</span></button>
+  <button data-tab="pantry">Pantry</button>
+</nav>
+
+<main>
+
+  <!-- RECIPES TAB -->
+  <section class="section active" id="tab-recipes">
+    <div class="controls">
+      <input type="text" class="search-input" id="recipe-search" placeholder="Search recipes...">
+    </div>
+    <div class="filter-chips" id="theme-chips"></div>
+
+    <div class="selected-summary" id="selected-summary"></div>
+
+    <div class="toolbar">
+      <span class="toolbar-info" id="recipe-count"></span>
+      <button class="text-btn" id="clear-selection">Clear selection</button>
+    </div>
+
+    <div id="recipe-list"></div>
+  </section>
+
+  <!-- SHOPPING TAB -->
+  <section class="section" id="tab-shopping">
+    <div class="toolbar">
+      <span class="toolbar-info" id="shopping-info">From <strong id="recipes-selected-count">0</strong> recipes</span>
+      <div>
+        <button class="text-btn" id="share-list">Share</button>
+        <button class="text-btn" id="reset-got">Reset ✓</button>
+      </div>
+    </div>
+    <div id="shopping-list"></div>
+    <div id="share-output" style="display:none"></div>
+  </section>
+
+  <!-- PANTRY TAB -->
+  <section class="section" id="tab-pantry">
+    <p style="color:var(--text-muted); font-size:13px; margin:0 0 14px;">
+      Tap items you already have at home — they'll be removed from your shopping list automatically.
+    </p>
+    <div class="pantry-add">
+      <input type="text" id="pantry-input" placeholder="Add a staple (e.g. Olive Oil)" autocomplete="off">
+      <button id="pantry-add-btn">Add</button>
+    </div>
+    <div class="toolbar">
+      <span class="toolbar-info" id="pantry-info"></span>
+      <button class="text-btn" id="clear-pantry">Clear pantry</button>
+    </div>
+    <div id="pantry-list"></div>
+  </section>
+
+</main>
+
+<button class="fab" id="fab" title="Add recipe">+</button>
+
+<!-- Setup overlay (first launch) -->
+<div class="setup-overlay" id="setup-overlay">
+  <div class="setup-inner">
+    <h1>Share with your household</h1>
+    <p>One person does a 2-minute setup, then shares one code with everyone else.</p>
+
+    <div class="setup-tabs">
+      <button class="active" data-pane="create">I'm setting it up</button>
+      <button data-pane="join">I got a code</button>
+      <button data-pane="solo">Just me</button>
+    </div>
+
+    <!-- Create pane -->
+    <div class="setup-pane active" id="pane-create">
+      <div class="setup-step">
+        <span class="setup-step-num">1</span>
+        <h3>Get a free API key from jsonbin.io</h3>
+        <div class="step-body">
+          Sign up with any email (takes ~30 seconds). Once logged in, go to the <strong>API Keys</strong> page and copy your <strong>Master Key</strong>. Free plan = 10,000 requests/month, plenty for a household.
+          <br>
+          <a class="btn-link" href="https://jsonbin.io/login" target="_blank" rel="noopener">Sign up at jsonbin.io →</a>
+        </div>
+      </div>
+
+      <div class="setup-step">
+        <span class="setup-step-num">2</span>
+        <h3>Paste it here</h3>
+        <div class="step-body">
+          The app creates a private bin for your household automatically. You'll get a share code at the end to send to your housemates.
+        </div>
+        <div class="form-group" style="margin-top:10px">
+          <input type="text" id="create-api-key" placeholder="Paste Master Key (starts with $2a$…)" autocomplete="off">
+        </div>
+        <div class="form-group">
+          <input type="text" id="create-user-name" placeholder="Your name (e.g. Alex)" autocomplete="off" maxlength="20">
+        </div>
+        <div class="setup-error" id="create-error"></div>
+        <button class="btn btn-primary" id="create-submit" style="width:100%">Create shared bin</button>
+      </div>
+    </div>
+
+    <!-- Join pane -->
+    <div class="setup-pane" id="pane-join">
+      <div class="setup-step">
+        <h3>Paste the share code</h3>
+        <div class="step-body">
+          Your housemate will send you a code that starts with <strong>RSL-</strong>. Paste it below with your name.
+        </div>
+        <div class="form-group" style="margin-top:10px">
+          <input type="text" id="join-code" placeholder="RSL-..." autocomplete="off">
+        </div>
+        <div class="form-group">
+          <input type="text" id="join-user-name" placeholder="Your name" autocomplete="off" maxlength="20">
+        </div>
+        <div class="setup-error" id="join-error"></div>
+        <button class="btn btn-primary" id="join-submit" style="width:100%">Join & start syncing</button>
+      </div>
+    </div>
+
+    <!-- Solo pane -->
+    <div class="setup-pane" id="pane-solo">
+      <div class="setup-step">
+        <h3>Use on this device only</h3>
+        <div class="step-body">
+          Your data stays on this phone. You can set up sharing later from the ⚙ settings menu.
+        </div>
+        <button class="btn btn-primary" id="solo-submit" style="width:100%;margin-top:14px">Continue without sync</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Settings modal -->
+<div class="modal-backdrop" id="settings-modal">
+  <div class="modal">
+    <h2>Settings</h2>
+    <div id="settings-content"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="settings-close" style="flex:1">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add/Edit recipe modal -->
+<div class="modal-backdrop" id="recipe-modal">
+  <div class="modal">
+    <h2 id="modal-title">Add Recipe</h2>
+    <div class="form-group">
+      <label for="rc-name">Recipe name</label>
+      <input type="text" id="rc-name" placeholder="e.g. Chicken Parmesan">
+    </div>
+    <div class="form-group">
+      <label for="rc-theme">Theme / Category</label>
+      <input type="text" id="rc-theme" list="theme-list" placeholder="e.g. Italian">
+      <datalist id="theme-list"></datalist>
+    </div>
+    <div class="form-group">
+      <label for="rc-ingredients">Ingredients</label>
+      <textarea id="rc-ingredients" placeholder="One per line, or comma-separated&#10;Chicken Breast&#10;Pasta&#10;Marinara Sauce"></textarea>
+      <div class="form-help">One ingredient per line, or separate with commas.</div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="modal-cancel">Cancel</button>
+      <button class="btn btn-danger" id="modal-delete" style="display:none">Delete</button>
+      <button class="btn btn-primary" id="modal-save">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ========== DATA ==========
+const DEFAULT_RECIPES = [{"name": "Vodka Pasta", "theme": "Italian", "ingredients": ["Penne Pasta", "Tomato Paste", "Onion", "Garlic", "Vodka", "Heavy Cream", "Parmesan", "Red Pepper Flakes", "Olive Oil", "Butter"]}, {"name": "Warm Salad", "theme": "Healthy", "ingredients": ["Lentils", "Broccoli", "Cauliflower", "Carrot", "Hummus Dressing", "Feta", "Arugula", "Olive Oil", "Lemon"]}, {"name": "Chicken Teriyaki Bowls", "theme": "Asian", "ingredients": ["Rice", "Chicken Thighs", "Broccoli", "Bell Pepper", "Snap Peas", "Teriyaki Sauce", "Sesame Seeds", "Green Onion", "Ginger", "Garlic"]}, {"name": "Avo Tofu Balls", "theme": "Asian", "ingredients": ["Rice", "Extra-Firm Tofu", "Avocado", "Edamame", "Soy Sauce", "Sesame Seeds", "Rice Vinegar"]}, {"name": "Pesto Chicken Sausage Pasta", "theme": "Italian", "ingredients": ["Rotini Pasta", "Chicken Sausage", "Asparagus", "Sun-dried Tomatoes", "Spinach", "Pesto", "Parmesan", "Olive Oil"]}, {"name": "Broccoli Feta Soup", "theme": "Soup", "ingredients": ["Orzo", "Broccoli", "Onion", "Garlic", "Chicken Broth", "Heavy Cream", "Feta", "Olive Oil", "Lemon", "Salt & Pepper"]}, {"name": "Crockpot Chicken Tacos", "theme": "Mexican", "ingredients": ["Flour Tortillas", "Chicken Breast", "Lettuce", "Avocado", "Tomato", "Salsa", "Cotija", "Taco Seasoning", "Lime", "Sour Cream"]}, {"name": "Chickpea Warm Salad Bowl", "theme": "Healthy", "ingredients": ["Pearled Couscous", "Chickpeas", "Broccoli", "Cauliflower", "Arugula", "Hummus Dressing", "Feta", "Olive Oil", "Lemon", "Cumin", "Paprika"]}, {"name": "Yellow Chicken", "theme": "American", "ingredients": ["Rice", "Chicken Breast", "Broccoli", "Yellow seasoning"]}, {"name": "Dumpling Soup", "theme": "Asian", "ingredients": ["Pork/Chicken Dumplings", "Bok Choy", "Green Onion", "Chicken Broth", "Soy Sauce", "Sesame Oil", "Ginger", "Garlic", "Rice Vinegar", "Chili Oil"]}, {"name": "Leek Potato Soup", "theme": "Soup", "ingredients": ["Russet Potatoes", "Leek", "Potato", "Garlic", "Chicken Broth", "Butter", "Thyme", "Salt & Pepper"]}, {"name": "Crockpot BBQ Chicken", "theme": "American", "ingredients": ["Hamburger Buns", "Chicken Breast", "Onion", "BBQ Sauce", "Brown Sugar", "Garlic Powder", "Worcestershire Sauce"]}, {"name": "Pot Roast", "theme": "American", "ingredients": ["Russet Potatoes", "Chuck Roast (Beef)", "Potato", "Carrot", "Onion", "Beef Stock", "Tomato Paste", "Garlic", "Rosemary", "Thyme", "Olive Oil"]}, {"name": "Asparagus Pasta", "theme": "Healthy", "ingredients": ["Pasta", "Asparagus", "Cherry Tomatoes", "Garlic", "Olive Oil", "Lemon Zest", "Parmesan", "Red Pepper Flakes"]}, {"name": "Chicken Noodle Soup", "theme": "Soup", "ingredients": ["Egg Noodles", "Chicken Breast", "Onion", "Carrot", "Celery", "Chicken Broth", "Garlic", "Thyme", "Bay Leaf", "Parsley", "Butter"]}, {"name": "Chicken Pot Pie", "theme": "American", "ingredients": ["Pie Crust / Puff Pastry", "Chicken Breast", "Onion", "Carrot", "Celery", "Chicken Broth", "Butter", "Flour", "Thyme", "Peas", "Garlic"]}, {"name": "Steak, Mash Potato, Veggie", "theme": "American", "ingredients": ["Mashed Potatoes", "Ribeye/Sirloin Steak", "Green Beans", "Garlic", "Butter", "Beef Stock", "Rosemary", "Thyme", "Garlic Butter", "Salt & Pepper"]}, {"name": "Burgers", "theme": "American", "ingredients": ["Brioche Buns", "80/20 Ground Beef", "Lettuce", "Ketchup", "Mustard", "Mayo", "American/Cheddar", "Pickles", "Salt & Pepper", "Garlic Powder"]}, {"name": "Sandwich", "theme": "American", "ingredients": ["Sliced bread", "Deli Turkey", "Lettuce", "Mayo", "Mustard", "Colby Jack", "Pickles", "Avocado", "Salt & Pepper"]}, {"name": "Pita Chicken Wrap", "theme": "Mediterranean", "ingredients": ["Pita Bread", "Grilled Chicken", "Lettuce", "Tzatziki", "Hummus", "Feta", "Kalamata Olives"]}, {"name": "Chicken Katsu", "theme": "Asian", "ingredients": ["Rice", "Chicken Breast", "Cabbage (shredded)", "Green Onion", "Tonkatsu Sauce", "Soy Sauce", "Panko Breadcrumbs", "Egg", "Flour", "Sesame Seeds"]}, {"name": "Asian Ground Turkey Wraps", "theme": "Asian", "ingredients": ["Butter Lettuce Cups", "Ground Turkey", "Lettuce", "Shredded Carrot", "Soy Sauce", "Hoisin Sauce", "Sesame Oil", "Ginger", "Garlic", "Green Onion", "Rice Vinegar"]}, {"name": "Braised Short Ribs", "theme": "American", "ingredients": ["Mashed Potatoes / Egg Noodles", "Bone-in Short Ribs", "Onion", "Carrot", "Celery", "Red Wine", "Beef Stock", "Tomato Paste", "Garlic", "Rosemary", "Thyme", "Bay Leaf"]}, {"name": "Pork Chops", "theme": "American", "ingredients": ["Mashed Potatoes", "Bone-in Pork Chops", "Green Beans", "Onion", "Garlic", "Chicken Broth", "Butter", "Rosemary", "Thyme", "Dijon Mustard", "Olive Oil"]}, {"name": "Chicken Tenders", "theme": "American", "ingredients": ["French Fries / Rice", "Chicken Breast Strips", "BBQ Sauce", "Panko Breadcrumbs", "Egg", "Flour", "Garlic Powder", "Paprika"]}, {"name": "Pizza Caesar Salad Sandwich", "theme": "Italian", "ingredients": ["Baguette", "Pepperoni", "Salami", "Romaine Salad", "Tomato", "Marinara", "Caesar Dressing", "Parmesan", "Mozzarella", "Olive Oil"]}, {"name": "White People Tacos", "theme": "Mexican", "ingredients": ["Flour Tortillas", "80/20 Ground Beef", "Lettuce", "Tomato", "Onion", "Taco Sauce / Salsa", "Shredded Cheddar", "Taco Seasoning", "Sour Cream", "Lime"]}, {"name": "Bulgogi", "theme": "Asian", "ingredients": ["Rice", "Thinly Sliced Beef (Ribeye)", "Green Onion", "Onion", "KBBQ Sauce", "Sesame Seeds"]}, {"name": "Upgraded Tacos", "theme": "Mexican", "ingredients": ["Flour Tortillas", "Thinly Sliced Beef (Skirt/Flank)", "Avocado", "Salsa Verde", "Lime Juice", "Cotija", "Taco Seasoning"]}, {"name": "Chicken Hummus", "theme": "Mediterranean", "ingredients": ["Pita Bread", "Grilled Chicken Breast", "Hummus", "Olive Oil", "Feta", "Kalamata Olives", "Lemon"]}, {"name": "Fall Salad", "theme": "Healthy", "ingredients": ["Pasta salad", "Chicken Sausage", "Mixed Greens", "Apple (sliced)", "Roasted Sweet Potato", "Apple Cider Vinaigrette", "Dried Cranberries", "Olive Oil"]}, {"name": "Breakfast", "theme": "American", "ingredients": ["Toast", "Bacon", "Eggs", "Butter", "Salt & Pepper", "Everything Bagel Seasoning", "Avocado (optional)"]}, {"name": "Philly Cheesesteak", "theme": "American", "ingredients": ["Hoagie Roll", "Shaved Ribeye/Roast Beef", "Onion", "Beef Stock", "Salt & Pepper", "Garlic Powder", "Worcestershire Sauce", "Mustard Dressing", "Provolone / Cheez Whiz"]}, {"name": "Fart Soup", "theme": "Healthy", "ingredients": ["White Beans / Cannellini Beans", "Italian Sausage", "Mirepoix (Onion/Carrot/Celery)", "Tomato Paste", "Kale", "Chicken Broth", "Olive Oil", "Parmesan", "Garlic", "Red Pepper Flakes", "Bay Leaf", "Rosemary"]}];
+
+// ========== STATE & STORAGE ==========
+const STORE_KEY = 'rsl_v1';
+const SYNC_KEY = 'rsl_sync_v1';
+const state = loadState();
+const sync = loadSyncConfig();
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (!parsed.recipes) parsed.recipes = DEFAULT_RECIPES.slice();
+      if (!parsed.selected) parsed.selected = [];
+      if (!parsed.pantry) parsed.pantry = [];
+      if (!parsed.got) parsed.got = [];
+      if (!parsed.activeTheme) parsed.activeTheme = 'All';
+      if (!parsed.rev) parsed.rev = 0;
+      if (!parsed.lastEditor) parsed.lastEditor = null;
+      return parsed;
+    }
+  } catch(e) { console.warn('load failed', e); }
+  return {
+    recipes: DEFAULT_RECIPES.slice(),
+    selected: [],
+    pantry: [],
+    got: [],
+    activeTheme: 'All',
+    rev: 0,            // local revision counter (bumps on every change)
+    lastEditor: null   // name of whoever last made a change
+  };
+}
+function saveLocal() {
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
+  catch(e) { console.warn('save failed', e); }
+}
+function loadSyncConfig() {
+  try {
+    const raw = localStorage.getItem(SYNC_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch(e) {}
+  return { mode: null, binId: null, apiKey: null, userName: null, lastPulledRev: 0, lastSyncAt: 0 };
+}
+function saveSyncConfig() {
+  try { localStorage.setItem(SYNC_KEY, JSON.stringify(sync)); }
+  catch(e) {}
+}
+
+// saveState is called whenever local state changes. It persists locally
+// and then (if sync is enabled) pushes to the cloud.
+function saveState(opts = {}) {
+  // Bump rev & record who did it, unless this call is from a remote pull.
+  if (!opts.fromRemote) {
+    state.rev = (state.rev || 0) + 1;
+    state.lastEditor = sync.userName || state.lastEditor;
+  }
+  saveLocal();
+  if (!opts.fromRemote && sync.mode === 'shared') {
+    schedulePush();
+  }
+}
+
+// ========== SYNC ENGINE (jsonbin.io) ==========
+// Polling strategy is deliberately conservative to stay within jsonbin's
+// free tier (10,000 req/month). We pull:
+//   1. Once on app launch (if logged into a shared group)
+//   2. Every time the tab regains focus (user opens the app again)
+//   3. On a slow 3-minute timer, but only while the tab is actually visible
+// We push immediately on every edit (debounced by 800ms to coalesce rapid taps).
+const VISIBLE_POLL_MS = 180000;       // 3 min, only while tab is visible
+const PUSH_DEBOUNCE_MS = 800;         // debounce pushes after rapid changes
+const JSONBIN_BASE = 'https://api.jsonbin.io/v3/b';
+
+let pushTimer = null;
+let pushInFlight = false;
+let pullTimer = null;
+let syncStatus = 'local'; // local | syncing | synced | offline
+
+function setSyncStatus(s, extraText) {
+  syncStatus = s;
+  const el = document.getElementById('sync-status');
+  const txt = document.getElementById('sync-text');
+  if (sync.mode !== 'shared') {
+    el.style.display = 'none';
+    return;
+  }
+  el.style.display = 'inline-flex';
+  el.className = 'sync-status ' + s;
+  const labels = {
+    syncing: 'Syncing…',
+    synced: extraText || 'Synced',
+    offline: 'Offline — will retry',
+    local: 'Local only'
+  };
+  txt.textContent = labels[s] || 'Synced';
+}
+
+function schedulePush() {
+  if (pushTimer) clearTimeout(pushTimer);
+  setSyncStatus('syncing');
+  pushTimer = setTimeout(pushNow, PUSH_DEBOUNCE_MS);
+}
+
+async function pushNow() {
+  if (sync.mode !== 'shared' || !sync.binId) return;
+  if (pushInFlight) {
+    // Another push is running; schedule a follow-up
+    setTimeout(schedulePush, 400);
+    return;
+  }
+  pushInFlight = true;
+  setSyncStatus('syncing');
+  try {
+    await putRemote(state);
+    sync.lastPulledRev = state.rev;
+    sync.lastSyncAt = Date.now();
+    saveSyncConfig();
+    setSyncStatus('synced', lastSyncText());
+  } catch (e) {
+    console.warn('push failed', e);
+    setSyncStatus('offline');
+    // Retry in 10s
+    setTimeout(pushNow, 10000);
+  } finally {
+    pushInFlight = false;
+  }
+}
+
+async function pullNow() {
+  if (sync.mode !== 'shared' || !sync.binId) return;
+  if (pushInFlight) return; // avoid colliding with a push
+  try {
+    const remote = await fetchRemote();
+    if (!remote) return;
+    // Merge: prefer the side with the higher rev; break ties toward local
+    const remoteRev = remote.rev || 0;
+    const localRev = state.rev || 0;
+    if (remoteRev > sync.lastPulledRev || remoteRev > localRev) {
+      const merged = mergeStates(remote, state, /*preferLocal=*/false);
+      Object.assign(state, merged);
+      saveLocal();
+      sync.lastPulledRev = state.rev;
+      sync.lastSyncAt = Date.now();
+      saveSyncConfig();
+      renderAll();
+    }
+    setSyncStatus('synced', lastSyncText());
+  } catch (e) {
+    console.warn('pull failed', e);
+    setSyncStatus('offline');
+  }
+}
+
+function lastSyncText() {
+  if (!sync.lastSyncAt) return 'Synced';
+  const secs = Math.round((Date.now() - sync.lastSyncAt) / 1000);
+  if (secs < 5) return 'Synced just now';
+  if (secs < 60) return `Synced ${secs}s ago`;
+  const mins = Math.round(secs / 60);
+  return `Synced ${mins}m ago`;
+}
+
+async function fetchRemote() {
+  if (!sync.apiKey) throw new Error('Missing API key');
+  const url = `${JSONBIN_BASE}/${sync.binId}/latest`;
+  const res = await fetch(url, {
+    cache: 'no-store',
+    headers: { 'X-Master-Key': sync.apiKey, 'X-Bin-Meta': 'false' }
+  });
+  if (!res.ok) throw new Error('fetch failed: ' + res.status);
+  const data = await res.json();
+  // With X-Bin-Meta: false, jsonbin returns the raw record.
+  // Older API responses wrap it as {record, metadata} — handle both.
+  const record = (data && data.record) ? data.record : data;
+  if (!record || Object.keys(record).length === 0 || !record.recipes) return null;
+  return record;
+}
+
+async function putRemote(data) {
+  if (!sync.apiKey) throw new Error('Missing API key');
+  const url = `${JSONBIN_BASE}/${sync.binId}`;
+  const res = await fetch(url, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Master-Key': sync.apiKey
+    },
+    body: JSON.stringify(data)
+  });
+  if (!res.ok) {
+    const txt = await res.text().catch(()=>'');
+    throw new Error('Sync upload failed (' + res.status + '). ' + txt.slice(0, 120));
+  }
+}
+
+async function createBin(initialData) {
+  if (!sync.apiKey) throw new Error('Missing API key');
+  // New bins are created as private by default on jsonbin.io.
+  // Do NOT send X-Bin-Private here — it's only valid on the /meta/privacy
+  // endpoint, and sending it at creation causes a CORS preflight failure.
+  const res = await fetch(JSONBIN_BASE, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Master-Key': sync.apiKey,
+      'X-Bin-Name': 'Recipes & Shopping List'
+    },
+    body: JSON.stringify(initialData)
+  });
+  if (!res.ok) {
+    const txt = await res.text().catch(()=>'');
+    throw new Error('Could not create bin (' + res.status + '). ' + txt.slice(0, 120));
+  }
+  const data = await res.json();
+  return (data.metadata && data.metadata.id) || data.id;
+}
+
+// Merge two states. Strategy:
+//   - recipes: take the side with the higher rev (full replace). Recipes don't
+//     change often, and per-recipe merging is complex; this is good enough.
+//   - selected, pantry, got: union if both sides have been active; otherwise
+//     take the side with the higher rev. We use a union so if A checks recipe X
+//     and B checks recipe Y at the same time, both get added.
+//   - If preferLocal is true we treat equal revs as "local wins".
+function mergeStates(remote, local, preferLocal) {
+  if (!remote) return { ...local };
+  const rRev = remote.rev || 0;
+  const lRev = local.rev || 0;
+  const winner = (rRev > lRev) ? remote
+                : (lRev > rRev) ? local
+                : (preferLocal ? local : remote);
+
+  // For the checkbox-like lists, union the arrays so concurrent edits don't
+  // lose data. This means to "uncheck" something, the user has to do it after
+  // sync has caught up — acceptable for a household shopping list.
+  const mergeArr = (a, b) => {
+    const out = [];
+    const seen = new Set();
+    for (const item of [...(a||[]), ...(b||[])]) {
+      const k = String(item).toLowerCase();
+      if (!seen.has(k)) { seen.add(k); out.push(item); }
+    }
+    return out;
+  };
+
+  // But: if the winner has a FEWER items than the loser, we respect a deletion:
+  // the winner represents a deliberate uncheck or recipe-clear.
+  const pickArr = (field) => {
+    const rArr = remote[field] || [];
+    const lArr = local[field] || [];
+    const wArr = winner[field] || [];
+    // if both sides modified and neither is strictly shorter, union
+    if (rArr.length && lArr.length && Math.abs(rArr.length - lArr.length) <= 1) {
+      // heuristic: small diff ⇒ likely concurrent additions, union them
+      return mergeArr(rArr, lArr);
+    }
+    return wArr.slice();
+  };
+
+  return {
+    recipes: winner.recipes ? winner.recipes.slice() : (local.recipes || DEFAULT_RECIPES.slice()),
+    selected: pickArr('selected'),
+    pantry: pickArr('pantry'),
+    got: pickArr('got'),
+    activeTheme: local.activeTheme || 'All',  // theme filter is per-device
+    rev: Math.max(rRev, lRev) + 1,
+    lastEditor: winner.lastEditor || null
+  };
+}
+
+function startSync() {
+  if (sync.mode !== 'shared') return;
+  setSyncStatus('syncing');
+
+  // Pull once immediately, then set up the visibility-aware polling
+  pullNow();
+
+  // Only poll on a slow timer while the tab is actually visible.
+  // This saves a huge number of requests — a tab in the background burns nothing.
+  function restartTimer() {
+    if (pullTimer) { clearInterval(pullTimer); pullTimer = null; }
+    if (!document.hidden && sync.mode === 'shared') {
+      pullTimer = setInterval(pullNow, VISIBLE_POLL_MS);
+    }
+  }
+  restartTimer();
+
+  // When the user switches back to the app, pull immediately AND restart the timer
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+      pullNow();
+      restartTimer();
+    } else {
+      restartTimer(); // clears the timer while hidden
+    }
+  });
+
+  window.addEventListener('online', pullNow);
+  window.addEventListener('offline', () => setSyncStatus('offline'));
+}
+
+function stopSync() {
+  if (pullTimer) { clearInterval(pullTimer); pullTimer = null; }
+  if (pushTimer) { clearTimeout(pushTimer); pushTimer = null; }
+  setSyncStatus('local');
+}
+
+// The share code bundles bin ID + API key in a single pasteable string
+// so housemates don't have to paste two fields. It's base64(binId:apiKey)
+// with some obvious markers so users see it's a code, not a URL.
+function encodeShareCode(binId, apiKey) {
+  const raw = binId + ':' + apiKey;
+  // btoa handles the ASCII-safe encoding
+  return 'RSL-' + btoa(raw).replace(/=+$/, '');
+}
+function decodeShareCode(code) {
+  if (!code) return null;
+  let s = code.trim();
+  if (!s.startsWith('RSL-')) return null;
+  try {
+    const raw = atob(s.slice(4));
+    const colon = raw.indexOf(':');
+    if (colon < 0) return null;
+    const binId = raw.slice(0, colon);
+    const apiKey = raw.slice(colon + 1);
+    if (!binId || !apiKey) return null;
+    return { binId, apiKey };
+  } catch(e) { return null; }
+}
+
+// Helpers
+const norm = s => s.trim().toLowerCase();
+function idx(arr, val) { return arr.findIndex(x => norm(x) === norm(val)); }
+
+// ========== RENDER: RECIPES ==========
+let searchTerm = '';
+
+function renderThemeChips() {
+  const themes = ['All', ...new Set(state.recipes.map(r => r.theme).filter(Boolean))].sort((a,b) => a==='All' ? -1 : b==='All' ? 1 : a.localeCompare(b));
+  const el = document.getElementById('theme-chips');
+  el.innerHTML = themes.map(t =>
+    `<button class="chip ${state.activeTheme === t ? 'active' : ''}" data-theme="${escapeHtml(t)}">${escapeHtml(t)}</button>`
+  ).join('');
+  el.querySelectorAll('.chip').forEach(c => {
+    c.onclick = () => {
+      state.activeTheme = c.dataset.theme;
+      saveState();
+      renderThemeChips();
+      renderRecipes();
+    };
+  });
+
+  // datalist for modal
+  const dl = document.getElementById('theme-list');
+  dl.innerHTML = themes.filter(t => t !== 'All').map(t => `<option value="${escapeHtml(t)}">`).join('');
+}
+
+function renderRecipes() {
+  const list = document.getElementById('recipe-list');
+  const q = searchTerm.toLowerCase();
+  const filtered = state.recipes
+    .filter(r => state.activeTheme === 'All' || r.theme === state.activeTheme)
+    .filter(r => !q || r.name.toLowerCase().includes(q) || (r.ingredients||[]).some(i => i.toLowerCase().includes(q)))
+    .sort((a,b) => a.name.localeCompare(b.name));
+
+  document.getElementById('recipe-count').textContent =
+    `${filtered.length} recipe${filtered.length === 1 ? '' : 's'} · ${state.selected.length} selected`;
+
+  if (filtered.length === 0) {
+    list.innerHTML = `<div class="empty-state">No recipes match your search.<br><br>Tap the + button to add one.</div>`;
+  } else {
+    list.innerHTML = filtered.map((r, i) => {
+      const checked = state.selected.includes(r.name);
+      const ings = (r.ingredients || []).join(', ');
+      return `
+        <div class="recipe-card ${checked ? 'checked' : ''}" data-name="${escapeHtml(r.name)}">
+          <div class="recipe-header">
+            <div class="check" data-action="toggle"></div>
+            <div class="recipe-info" data-action="expand">
+              <div class="recipe-name">${escapeHtml(r.name)}</div>
+              <div class="recipe-theme">${escapeHtml(r.theme || '')} · ${(r.ingredients||[]).length} ingredients</div>
+            </div>
+            <div class="recipe-actions">
+              <button class="icon-btn" data-action="edit" aria-label="Edit">✎</button>
+            </div>
+          </div>
+          <div class="recipe-ingredients">${escapeHtml(ings)}</div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  list.querySelectorAll('.recipe-card').forEach(card => {
+    const name = card.dataset.name;
+    card.querySelector('[data-action="toggle"]').onclick = (e) => {
+      e.stopPropagation();
+      toggleSelected(name);
+    };
+    card.querySelector('[data-action="expand"]').onclick = () => {
+      card.classList.toggle('expanded');
+    };
+    card.querySelector('[data-action="edit"]').onclick = (e) => {
+      e.stopPropagation();
+      openModal(name);
+    };
+  });
+
+  updateSummary();
+  updateShopBadge();
+}
+
+function toggleSelected(name) {
+  const i = state.selected.indexOf(name);
+  if (i >= 0) state.selected.splice(i, 1);
+  else state.selected.push(name);
+  saveState();
+  renderRecipes();
+  renderShopping();
+}
+
+function updateSummary() {
+  const el = document.getElementById('selected-summary');
+  if (state.selected.length === 0) {
+    el.classList.remove('visible');
+    el.innerHTML = '';
+  } else {
+    el.classList.add('visible');
+    el.innerHTML = `<strong>${state.selected.length}</strong> recipe${state.selected.length===1?'':'s'} selected → check the Shopping tab`;
+  }
+}
+
+// ========== RENDER: SHOPPING ==========
+function buildShoppingList() {
+  // ingredient name -> { count, recipes: [] }
+  const map = new Map();
+  state.recipes.forEach(r => {
+    if (!state.selected.includes(r.name)) return;
+    (r.ingredients || []).forEach(ing => {
+      const key = norm(ing);
+      if (!map.has(key)) map.set(key, { display: ing, count: 0, recipes: [] });
+      const e = map.get(key);
+      e.count++;
+      e.recipes.push(r.name);
+    });
+  });
+  // filter out pantry items
+  const pantrySet = new Set(state.pantry.map(norm));
+  const items = [];
+  map.forEach((v, k) => {
+    if (!pantrySet.has(k)) items.push({ key: k, ...v });
+  });
+  items.sort((a, b) => a.display.localeCompare(b.display));
+  return items;
+}
+
+function renderShopping() {
+  const list = document.getElementById('shopping-list');
+  const items = buildShoppingList();
+  document.getElementById('recipes-selected-count').textContent = state.selected.length;
+
+  if (state.selected.length === 0) {
+    list.innerHTML = `
+      <div class="shopping-empty">
+        <span class="icon">🛒</span>
+        Pick some recipes to generate your shopping list.
+      </div>`;
+  } else if (items.length === 0) {
+    list.innerHTML = `
+      <div class="shopping-empty">
+        <span class="icon">✨</span>
+        Looks like you have everything in your pantry!
+      </div>`;
+  } else {
+    // split into "To buy" and "Got"
+    const toBuy = items.filter(i => !state.got.includes(i.key));
+    const got = items.filter(i => state.got.includes(i.key));
+    let html = '';
+    if (toBuy.length) {
+      html += `<div class="shopping-group"><div class="shopping-group-title">To buy (${toBuy.length})</div>`;
+      html += toBuy.map(it => renderShopItem(it, false)).join('');
+      html += `</div>`;
+    }
+    if (got.length) {
+      html += `<div class="shopping-group"><div class="shopping-group-title">In cart (${got.length})</div>`;
+      html += got.map(it => renderShopItem(it, true)).join('');
+      html += `</div>`;
+    }
+    list.innerHTML = html;
+    list.querySelectorAll('.shop-item').forEach(el => {
+      el.onclick = () => {
+        const key = el.dataset.key;
+        const i = state.got.indexOf(key);
+        if (i >= 0) state.got.splice(i, 1);
+        else state.got.push(key);
+        saveState();
+        renderShopping();
+      };
+    });
+  }
+  updateShopBadge();
+}
+
+function renderShopItem(it, isGot) {
+  return `
+    <div class="shop-item ${isGot?'got':''}" data-key="${escapeHtml(it.key)}">
+      <div class="shop-check"></div>
+      <div class="item-name">${escapeHtml(it.display)}</div>
+      ${it.count > 1 ? `<div class="item-count">×${it.count}</div>` : ''}
+    </div>
+  `;
+}
+
+function updateShopBadge() {
+  const items = buildShoppingList();
+  const toBuy = items.filter(i => !state.got.includes(i.key)).length;
+  document.getElementById('shop-badge').textContent = toBuy;
+}
+
+// ========== RENDER: PANTRY ==========
+function renderPantry() {
+  const list = document.getElementById('pantry-list');
+  document.getElementById('pantry-info').textContent =
+    `${state.pantry.length} item${state.pantry.length === 1 ? '' : 's'} in pantry`;
+
+  // Suggest ingredients from selected recipes that aren't yet in pantry
+  const allIngredients = new Set();
+  state.recipes.forEach(r => (r.ingredients||[]).forEach(i => allIngredients.add(i)));
+  const pantrySorted = [...state.pantry].sort((a,b)=>a.localeCompare(b));
+
+  // Show current pantry items
+  const pantryHtml = pantrySorted.length
+    ? pantrySorted.map(item => `
+        <div class="pantry-item have" data-item="${escapeHtml(item)}">
+          <div class="shop-check" style="background:var(--green-accent);border-color:var(--green-accent);">
+            <span style="color:white;font-weight:bold;">✓</span>
+          </div>
+          <div class="item-name">${escapeHtml(item)}</div>
+          <button class="icon-btn" data-remove aria-label="Remove">×</button>
+        </div>
+      `).join('')
+    : `<div class="empty-state" style="padding:20px 0">No pantry items yet.<br>Add staples you always have on hand.</div>`;
+
+  // Also show a "Common ingredients" suggestion list from the recipes
+  const suggested = [...allIngredients]
+    .filter(i => !state.pantry.some(p => norm(p) === norm(i)))
+    .sort((a,b)=>a.localeCompare(b));
+
+  let suggestedHtml = '';
+  if (suggested.length) {
+    suggestedHtml = `
+      <div style="margin-top:20px">
+        <div class="shopping-group-title">Tap to add from recipes</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">
+          ${suggested.slice(0, 60).map(s =>
+            `<button class="chip" data-suggest="${escapeHtml(s)}">+ ${escapeHtml(s)}</button>`
+          ).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  list.innerHTML = pantryHtml + suggestedHtml;
+
+  list.querySelectorAll('[data-remove]').forEach(b => {
+    b.onclick = (e) => {
+      e.stopPropagation();
+      const item = b.closest('[data-item]').dataset.item;
+      const i = idx(state.pantry, item);
+      if (i >= 0) state.pantry.splice(i, 1);
+      saveState();
+      renderPantry();
+      renderShopping();
+    };
+  });
+  list.querySelectorAll('[data-suggest]').forEach(b => {
+    b.onclick = () => {
+      const item = b.dataset.suggest;
+      if (idx(state.pantry, item) < 0) state.pantry.push(item);
+      saveState();
+      renderPantry();
+      renderShopping();
+    };
+  });
+}
+
+// ========== MODAL (Add / Edit Recipe) ==========
+let editingName = null;
+
+function openModal(name = null) {
+  editingName = name;
+  const title = document.getElementById('modal-title');
+  const nameEl = document.getElementById('rc-name');
+  const themeEl = document.getElementById('rc-theme');
+  const ingEl = document.getElementById('rc-ingredients');
+  const del = document.getElementById('modal-delete');
+  if (name) {
+    title.textContent = 'Edit Recipe';
+    const r = state.recipes.find(x => x.name === name);
+    nameEl.value = r.name;
+    themeEl.value = r.theme || '';
+    ingEl.value = (r.ingredients || []).join('\n');
+    del.style.display = '';
+  } else {
+    title.textContent = 'Add Recipe';
+    nameEl.value = '';
+    themeEl.value = '';
+    ingEl.value = '';
+    del.style.display = 'none';
+  }
+  document.getElementById('recipe-modal').classList.add('open');
+  setTimeout(() => nameEl.focus(), 100);
+}
+function closeModal() {
+  document.getElementById('recipe-modal').classList.remove('open');
+  editingName = null;
+}
+function saveModal() {
+  const name = document.getElementById('rc-name').value.trim();
+  const theme = document.getElementById('rc-theme').value.trim();
+  const rawIng = document.getElementById('rc-ingredients').value;
+  if (!name) { alert('Please enter a recipe name.'); return; }
+
+  const ingredients = rawIng.split(/[\n,]+/).map(s => s.trim()).filter(Boolean);
+  if (ingredients.length === 0) { alert('Please add at least one ingredient.'); return; }
+
+  if (editingName) {
+    const i = state.recipes.findIndex(r => r.name === editingName);
+    if (i >= 0) {
+      // update selection reference if renamed
+      const selIdx = state.selected.indexOf(editingName);
+      state.recipes[i] = { name, theme, ingredients };
+      if (selIdx >= 0) state.selected[selIdx] = name;
+    }
+  } else {
+    if (state.recipes.some(r => norm(r.name) === norm(name))) {
+      alert('A recipe with that name already exists.');
+      return;
+    }
+    state.recipes.push({ name, theme, ingredients });
+  }
+  saveState();
+  renderThemeChips();
+  renderRecipes();
+  renderShopping();
+  closeModal();
+}
+function deleteRecipe() {
+  if (!editingName) return;
+  if (!confirm(`Delete "${editingName}"?`)) return;
+  const i = state.recipes.findIndex(r => r.name === editingName);
+  if (i >= 0) state.recipes.splice(i, 1);
+  const s = state.selected.indexOf(editingName);
+  if (s >= 0) state.selected.splice(s, 1);
+  saveState();
+  renderThemeChips();
+  renderRecipes();
+  renderShopping();
+  closeModal();
+}
+
+// ========== SHARE ==========
+function shareShoppingList() {
+  const items = buildShoppingList().filter(i => !state.got.includes(i.key));
+  if (items.length === 0) { alert('Nothing to share — your list is empty!'); return; }
+  const selectedNames = state.selected.join(', ');
+  const text = `🛒 Shopping List\nFor: ${selectedNames}\n\n${items.map(i => `• ${i.display}${i.count>1?` (×${i.count})`:''}`).join('\n')}`;
+
+  if (navigator.share) {
+    navigator.share({ title: 'Shopping List', text }).catch(()=>{
+      fallbackCopy(text);
+    });
+  } else {
+    fallbackCopy(text);
+  }
+}
+function fallbackCopy(text) {
+  navigator.clipboard?.writeText(text).then(
+    () => alert('Shopping list copied to clipboard!'),
+    () => {
+      const out = document.getElementById('share-output');
+      out.style.display = 'block';
+      out.innerHTML = `<div class="share-box">${escapeHtml(text)}</div><div class="form-help" style="margin-top:6px">Copy the text above to share.</div>`;
+    }
+  );
+}
+
+// ========== UTIL ==========
+function escapeHtml(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
+
+// ========== EVENTS ==========
+document.querySelectorAll('nav.tabs button').forEach(b => {
+  b.onclick = () => {
+    document.querySelectorAll('nav.tabs button').forEach(x => x.classList.remove('active'));
+    document.querySelectorAll('.section').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    document.getElementById('tab-' + b.dataset.tab).classList.add('active');
+    if (b.dataset.tab === 'pantry') renderPantry();
+    if (b.dataset.tab === 'shopping') renderShopping();
+    window.scrollTo(0, 0);
+  };
+});
+
+document.getElementById('recipe-search').oninput = (e) => {
+  searchTerm = e.target.value;
+  renderRecipes();
+};
+
+document.getElementById('clear-selection').onclick = () => {
+  if (state.selected.length === 0) return;
+  if (confirm('Clear all selected recipes?')) {
+    state.selected = [];
+    state.got = [];
+    saveState();
+    renderRecipes();
+    renderShopping();
+  }
+};
+
+document.getElementById('fab').onclick = () => openModal();
+document.getElementById('modal-cancel').onclick = closeModal;
+document.getElementById('modal-save').onclick = saveModal;
+document.getElementById('modal-delete').onclick = deleteRecipe;
+document.getElementById('recipe-modal').onclick = (e) => {
+  if (e.target.id === 'recipe-modal') closeModal();
+};
+
+document.getElementById('pantry-add-btn').onclick = () => {
+  const inp = document.getElementById('pantry-input');
+  const v = inp.value.trim();
+  if (!v) return;
+  if (idx(state.pantry, v) < 0) state.pantry.push(v);
+  inp.value = '';
+  saveState();
+  renderPantry();
+  renderShopping();
+};
+document.getElementById('pantry-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('pantry-add-btn').click();
+});
+document.getElementById('clear-pantry').onclick = () => {
+  if (state.pantry.length === 0) return;
+  if (confirm('Clear your entire pantry list?')) {
+    state.pantry = [];
+    saveState();
+    renderPantry();
+    renderShopping();
+  }
+};
+
+document.getElementById('share-list').onclick = shareShoppingList;
+document.getElementById('reset-got').onclick = () => {
+  if (state.got.length === 0) return;
+  state.got = [];
+  saveState();
+  renderShopping();
+};
+
+// ========== SETUP OVERLAY ==========
+function showSetup() {
+  document.getElementById('setup-overlay').classList.add('open');
+}
+function hideSetup() {
+  document.getElementById('setup-overlay').classList.remove('open');
+}
+
+// Tab switching inside setup
+document.querySelectorAll('.setup-tabs button').forEach(b => {
+  b.onclick = () => {
+    document.querySelectorAll('.setup-tabs button').forEach(x => x.classList.remove('active'));
+    document.querySelectorAll('.setup-pane').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    document.getElementById('pane-' + b.dataset.pane).classList.add('active');
+  };
+});
+
+async function handleCreate() {
+  const errEl = document.getElementById('create-error');
+  errEl.textContent = '';
+  const apiKey = document.getElementById('create-api-key').value.trim();
+  const name   = document.getElementById('create-user-name').value.trim();
+  if (!apiKey || apiKey.length < 20) {
+    errEl.textContent = 'That doesn\'t look like a valid API key. It should start with "$2a$" or "$2b$".';
+    return;
+  }
+  if (!name) { errEl.textContent = 'Please enter your name.'; return; }
+
+  const btn = document.getElementById('create-submit');
+  btn.disabled = true; btn.textContent = 'Creating bin…';
+  try {
+    // Temporarily set apiKey so createBin() can read it
+    sync.apiKey = apiKey;
+
+    // Seed with current local data (34 default recipes + anything user added)
+    state.rev = (state.rev || 0) + 1;
+    state.lastEditor = name;
+    saveLocal();
+    const binId = await createBin(state);
+    if (!binId) throw new Error('Bin was created but no ID returned.');
+
+    sync.mode = 'shared';
+    sync.binId = binId;
+    sync.userName = name;
+    sync.lastPulledRev = state.rev;
+    sync.lastSyncAt = Date.now();
+    saveSyncConfig();
+
+    hideSetup();
+    renderAll();
+    startSync();
+
+    // Show them the share code to send to housemates
+    setTimeout(showShareCodePrompt, 200);
+  } catch (e) {
+    sync.apiKey = null; // roll back on failure
+    let msg = e.message || 'Something went wrong.';
+    // "Failed to fetch" almost always means the file is being opened from file://
+    // or there's no internet. Give a helpful hint.
+    if (/failed to fetch|networkerror|load failed/i.test(msg)) {
+      if (location.protocol === 'file:') {
+        msg = 'This app can\'t reach the internet when opened as a local file. Host it on GitHub Pages (or similar) and open it via https://, then try again.';
+      } else {
+        msg = 'Couldn\'t reach jsonbin.io. Check your internet connection and try again.';
+      }
+    }
+    errEl.textContent = msg;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Create shared bin';
+  }
+}
+
+async function handleJoin() {
+  const errEl = document.getElementById('join-error');
+  errEl.textContent = '';
+  const raw  = document.getElementById('join-code').value;
+  const name = document.getElementById('join-user-name').value.trim();
+  const decoded = decodeShareCode(raw);
+  if (!decoded) {
+    errEl.textContent = 'That code doesn\'t look right. It should start with "RSL-".';
+    return;
+  }
+  if (!name) { errEl.textContent = 'Please enter your name.'; return; }
+
+  const btn = document.getElementById('join-submit');
+  btn.disabled = true; btn.textContent = 'Connecting…';
+  try {
+    sync.apiKey = decoded.apiKey;
+    sync.binId  = decoded.binId;
+    const remote = await fetchRemote();
+    if (!remote) throw new Error('That bin is empty — ask the setup person to save a recipe first.');
+
+    Object.assign(state, {
+      recipes: remote.recipes || DEFAULT_RECIPES.slice(),
+      selected: remote.selected || [],
+      pantry: remote.pantry || [],
+      got: remote.got || [],
+      rev: remote.rev || 1,
+      lastEditor: remote.lastEditor || null
+    });
+    saveLocal();
+
+    sync.mode = 'shared';
+    sync.userName = name;
+    sync.lastPulledRev = state.rev;
+    sync.lastSyncAt = Date.now();
+    saveSyncConfig();
+
+    hideSetup();
+    renderAll();
+    startSync();
+  } catch (e) {
+    sync.apiKey = null;
+    sync.binId = null;
+    let msg = e.message || 'Couldn\'t connect. Double-check the share code.';
+    if (/failed to fetch|networkerror|load failed/i.test(msg)) {
+      if (location.protocol === 'file:') {
+        msg = 'This app can\'t reach the internet when opened as a local file. Open it via a hosted https:// URL, then try again.';
+      } else {
+        msg = 'Couldn\'t reach jsonbin.io. Check your internet connection and try again.';
+      }
+    }
+    errEl.textContent = msg;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Join & start syncing';
+  }
+}
+
+function showShareCodePrompt() {
+  const code = encodeShareCode(sync.binId, sync.apiKey);
+  const el = document.getElementById('settings-content');
+  el.innerHTML = `
+    <h2 style="margin-top:0;color:var(--green)">You're all set!</h2>
+    <p style="font-size:14px;color:var(--text-muted);line-height:1.55">
+      Send this code to your housemates. They'll paste it into <strong>"I got a code"</strong> on their devices.
+    </p>
+    <div class="code-block">${escapeHtml(code)}</div>
+    <button class="btn btn-primary" id="sc-copy" style="width:100%;margin-bottom:8px">Copy share code</button>
+    <button class="btn btn-secondary" id="sc-share" style="width:100%">Share via…</button>
+    <p style="font-size:12px;color:var(--text-muted);margin-top:12px;line-height:1.5">
+      You can always get this code again from the ⚙ settings menu.
+    </p>
+  `;
+  document.getElementById('settings-modal').classList.add('open');
+  document.getElementById('sc-copy').onclick = () => {
+    navigator.clipboard?.writeText(code).then(
+      () => {
+        const b = document.getElementById('sc-copy');
+        b.textContent = 'Copied ✓'; setTimeout(()=>b.textContent='Copy share code', 1500);
+      },
+      () => alert('Couldn\'t copy. Here it is: ' + code)
+    );
+  };
+  document.getElementById('sc-share').onclick = () => {
+    if (navigator.share) {
+      navigator.share({
+        title: 'Household Recipe App',
+        text: `Join our household recipe & shopping list. Open the app, tap "I got a code", and paste:\n\n${code}`
+      }).catch(()=>{});
+    } else {
+      document.getElementById('sc-copy').click();
+    }
+  };
+}
+
+document.getElementById('create-submit').onclick = handleCreate;
+document.getElementById('join-submit').onclick = handleJoin;
+document.getElementById('solo-submit').onclick = () => {
+  sync.mode = 'solo';
+  saveSyncConfig();
+  hideSetup();
+  setSyncStatus('local');
+};
+
+// ========== SETTINGS MODAL ==========
+document.getElementById('settings-btn').onclick = openSettings;
+document.getElementById('settings-close').onclick = () =>
+  document.getElementById('settings-modal').classList.remove('open');
+document.getElementById('settings-modal').onclick = (e) => {
+  if (e.target.id === 'settings-modal')
+    document.getElementById('settings-modal').classList.remove('open');
+};
+
+function openSettings() {
+  const el = document.getElementById('settings-content');
+  const shared = sync.mode === 'shared';
+  let html = '';
+
+  if (shared) {
+    html += `
+      <div class="info-row"><span class="label">Mode</span><span class="value">Shared (household)</span></div>
+      <div class="info-row"><span class="label">Your name</span><span class="value">${escapeHtml(sync.userName || '—')}</span></div>
+      <div class="info-row"><span class="label">Last editor</span><span class="value">${escapeHtml(state.lastEditor || '—')}</span></div>
+      <div class="info-row"><span class="label">Status</span><span class="value">${escapeHtml(lastSyncText())}</span></div>
+      <p style="margin-top:16px;font-size:13px;color:var(--text-muted)">Share code — send this to your housemates. They paste it into <strong>"I got a code"</strong>.</p>
+      <div class="code-block">${escapeHtml(encodeShareCode(sync.binId, sync.apiKey))}</div>
+      <button class="btn btn-primary" id="st-copy" style="width:100%;margin-bottom:8px">Copy share code</button>
+      <button class="btn btn-secondary" id="st-rename" style="width:100%;margin-bottom:8px">Change my name</button>
+      <button class="btn btn-secondary" id="st-pull" style="width:100%;margin-bottom:8px">Pull latest now</button>
+      <button class="btn btn-danger" id="st-leave" style="width:100%">Leave group & go solo</button>
+    `;
+  } else {
+    html += `
+      <div class="info-row"><span class="label">Mode</span><span class="value">Solo (this device only)</span></div>
+      <p style="margin-top:14px;font-size:13px;color:var(--text-muted)">Set up sharing to sync with up to 3 devices in your household.</p>
+      <button class="btn btn-primary" id="st-setup" style="width:100%">Set up sharing</button>
+    `;
+  }
+  el.innerHTML = html;
+  document.getElementById('settings-modal').classList.add('open');
+
+  if (shared) {
+    document.getElementById('st-copy').onclick = () => {
+      const code = encodeShareCode(sync.binId, sync.apiKey);
+      navigator.clipboard?.writeText(code).then(
+        () => {
+          const b = document.getElementById('st-copy');
+          b.textContent = 'Copied ✓'; setTimeout(()=>b.textContent='Copy share code', 1500);
+        },
+        () => alert('Couldn\'t copy. Here it is: ' + code)
+      );
+    };
+    document.getElementById('st-rename').onclick = () => {
+      const n = prompt('Your name:', sync.userName || '');
+      if (n && n.trim()) {
+        sync.userName = n.trim().slice(0, 20);
+        saveSyncConfig();
+        openSettings();
+      }
+    };
+    document.getElementById('st-pull').onclick = async () => {
+      setSyncStatus('syncing');
+      await pullNow();
+      openSettings();
+    };
+    document.getElementById('st-leave').onclick = () => {
+      if (!confirm('Leave the group? Your data will stay on this device but stop syncing.')) return;
+      stopSync();
+      sync.mode = 'solo';
+      sync.binId = null;
+      sync.apiKey = null;
+      saveSyncConfig();
+      openSettings();
+      setSyncStatus('local');
+    };
+  } else {
+    document.getElementById('st-setup').onclick = () => {
+      document.getElementById('settings-modal').classList.remove('open');
+      showSetup();
+    };
+  }
+}
+
+// ========== RENDER ALL ==========
+function renderAll() {
+  renderThemeChips();
+  renderRecipes();
+  renderShopping();
+  renderPantry();
+  const sub = document.getElementById('subtitle-line');
+  if (sync.mode === 'shared' && state.lastEditor && state.lastEditor !== sync.userName) {
+    sub.textContent = `Last edited by ${state.lastEditor}`;
+  } else {
+    sub.textContent = 'Check recipes → build your list → shop smart';
+  }
+}
+
+// ========== INIT ==========
+renderThemeChips();
+renderRecipes();
+renderShopping();
+
+if (!sync.mode) {
+  // First launch ever — show setup
+  showSetup();
+} else if (sync.mode === 'shared') {
+  startSync();
+} else {
+  setSyncStatus('local');
+}
+</script>
+</body>
+</html>
